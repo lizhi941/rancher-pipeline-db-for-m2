@@ -1,0 +1,54 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: db-service
+spec:
+  selector:
+    app: db
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  labels:
+    app: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      volumes:
+      - name: magento2-dbdata
+        persistentVolumeClaim:
+                claimName: dbdata
+      imagePullSecrets:
+      - name: pipeline-docker-registry
+      containers:
+      - name: db
+        image: mariadb:10
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: magento2
+        - name: MYSQL_DATABASE
+          value: magento2
+        - name: MYSQL_USER
+          value: magento2
+        - name: MYSQL_PASSWORD
+          value: magento2
+        - name: TERM
+          value: meh       
+        volumeMounts:
+           - name: magento2-dbdata
+             mountPath: "/var/lib/mysql"
+        ports:
+        - containerPort: 3306
